@@ -1,4 +1,4 @@
-# LayoAI live integration v2.0 — Geometry Intelligence
+# LayoAI live integration v2.1 — Geometry Intelligence + Auto Trace
 
 This branch is connected to the existing LayoAI Supabase project at the application-contract level.
 
@@ -15,12 +15,12 @@ This branch is connected to the existing LayoAI Supabase project at the applicat
 - Health endpoint truthfully reports readiness.
 
 ## Site Geometry Intelligence
-The file stage now supports a governed geometry workflow:
+The file stage supports a governed geometry workflow:
 
 1. **UTM coordinates** — redraw a polygon from Easting/Northing points and calculate area mathematically.
 2. **Known dimensions** — calculate and redraw a rectangular site from supplied length × width.
 3. **CAD / DXF-DWG** — DXF closed polylines can be extracted and area-calculated. DWG requires an approved conversion adapter or DXF export.
-4. **Sketch / photo** — the client traces the boundary, calibrates one known edge and confirms the result. Perspective photos remain estimates.
+4. **Sketch / photo / PDF** — authenticated users can request automatic outer-boundary tracing. The backend renders the first PDF page when needed and uses OpenCV to return a draft polygon. The client can correct the trace, calibrate one known edge and confirm the result.
 
 Confirmed geometry is stored as **LAYO-GEO-1.0** with source type, vertices, normalized geometry, area, calculation method, confidence and explicit client confirmation.
 
@@ -30,10 +30,13 @@ The system distinguishes:
 - client confirmation;
 - legal/survey verification.
 
+A perspective photograph remains an estimate even after calibration. A UTM/survey/CAD polygon can support a much stronger area result, subject to the correctness of the supplied source.
+
 ## Still needs deployment environment configuration
 - Finish secure OpenAI API key setup and set `OPENAI_API_KEY` on the hosting service.
 - Set `OPENAI_MODEL` after model/task evaluation.
 - Add the approved designer email(s) to `DESIGNER_EMAIL_ALLOWLIST`.
-- Copy the current v2.0 visual shell to `layoai/frontend/index.html` in the deployment bundle.
+- Copy the current v2.1 visual shell to `layoai/frontend/index.html` in the deployment bundle.
+- Add an approved DWG conversion service if direct DWG ingestion is required.
 
 SMS/WhatsApp verification is not enabled. No fake success state is used.
