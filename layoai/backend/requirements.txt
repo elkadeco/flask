@@ -1,0 +1,13 @@
+Flask>=3,<4
+gunicorn>=21,<24
+openai-agents[sqlalchemy]>=0
+aiosqlite>=0.20
+pydantic>=2,<3
+supabase>=2,<3
+python-dotenv>=1,<2
+requests>=2,<3
+pytest>=8,<9
+ezdxf>=1.3,<2
+opencv-python-headless>=4.10,<5
+PyMuPDF>=1.24,<2
+numpy>=2,<3
