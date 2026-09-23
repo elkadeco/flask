@@ -1,23 +1,23 @@
-# LayoAI modular scaffold v1.8
+# LayoAI live integration v1.9
 
-This branch adds a reviewable LayoAI application structure on top of the connected Flask/Railway repository.
+This branch is now connected to the existing LayoAI Supabase project at the application-contract level.
 
-## Reused from this repository
-- Flask application boundary
-- Gunicorn deployment
-- Railway deployment pattern
+## Live foundation completed
+- Supabase project restored.
+- Customer portal tables created with Row Level Security.
+- Private `layoai-private` Storage bucket created with per-user folder policies.
+- Email OTP-compatible authentication boundary.
+- Customer brief cloud save/resume endpoints.
+- Rooms and file metadata contracts.
+- Server-side OpenAI Agents SDK intake endpoint with persistent session adapter.
+- 15-language locale registry with English fallback and RTL metadata.
+- Designer access remains allowlist-protected.
+- Health endpoint truthfully reports readiness.
 
-## Added for LayoAI
-- 15-locale registry with English fallback and RTL metadata
-- Supabase bearer-token verification boundary
-- Customer brief persistence contract
-- Customer save/resume endpoints
-- Room data model
-- OpenAI Agents SDK intake route
-- Persistent agent-session contract
-- Designer-protected brief list
-- Truthful health/readiness endpoint
-- File-storage adapter boundary
-- CI scaffold and architecture notes
+## Still needs deployment environment configuration
+- Finish secure OpenAI API key setup and set `OPENAI_API_KEY` on the hosting service.
+- Set `OPENAI_MODEL` after model/task evaluation.
+- Add the approved designer email(s) to `DESIGNER_EMAIL_ALLOWLIST`.
+- The current v1.9 wired visual shell is delivered separately as an artifact and should be copied to `layoai/frontend/index.html` in the deployment bundle.
 
-This is a development scaffold, not production certification. No secrets are stored here.
+SMS/WhatsApp verification is not enabled. No fake success state is used.
