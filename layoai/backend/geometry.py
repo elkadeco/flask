@@ -1,6 +1,11 @@
+import base64
 import tempfile
-from flask import Blueprint, jsonify, request
+
+import cv2
 import ezdxf
+import fitz
+import numpy as np
+from flask import Blueprint, jsonify, request
 
 from auth import require_user, resolve_identity
 from supabase_rest import rest
@@ -104,6 +109,103 @@ def analyze_dxf():
             "confidence": "cad-derived" if factor else "needs-unit-confirmation",
         })
 
+def _image_from_upload(upload):
+    raw = upload.read()
+    name = (upload.filename or "").lower()
+
+    if name.endswith(".pdf") or upload.mimetype == "application/pdf":
+        doc = fitz.open(stream=raw, filetype="pdf")
+        if doc.page_count < 1:
+            raise ValueError("empty_pdf")
+        page = doc.load_page(0)
+        pix = page.get_pixmap(matrix=fitz.Matrix(1.5, 1.5), alpha=False)
+        image = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.height, pix.width, pix.n)
+        if pix.n == 4:
+            image = cv2.cvtColor(image, cv2.COLOR_RGBA2BGR)
+        else:
+            image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+        return image, "pdf-first-page"
+
+    arr = np.frombuffer(raw, dtype=np.uint8)
+    image = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+    if image is None:
+        raise ValueError("unsupported_image")
+    return image, "image"
+
+def _auto_boundary(image):
+    height, width = image.shape[:2]
+    max_width = 1400
+    if width > max_width:
+        scale = max_width / width
+        image = cv2.resize(
+            image,
+            (max_width, max(1, int(height * scale))),
+            interpolation=cv2.INTER_AREA,
+        )
+        height, width = image.shape[:2]
+
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    blur = cv2.GaussianBlur(gray, (5, 5), 0)
+    edges = cv2.Canny(blur, 50, 150)
+    edges = cv2.morphologyEx(
+        edges,
+        cv2.MORPH_CLOSE,
+        np.ones((5, 5), np.uint8),
+        iterations=2,
+    )
+    contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    image_area = float(width * height)
+    candidates = []
+    for contour in contours:
+        area = abs(cv2.contourArea(contour))
+        if area < image_area * 0.01 or area > image_area * 0.97:
+            continue
+        perimeter = cv2.arcLength(contour, True)
+        polygon = cv2.approxPolyDP(contour, max(2.0, 0.012 * perimeter), True)
+        points = [[float(p[0][0]), float(p[0][1])] for p in polygon]
+        if 3 <= len(points) <= 80:
+            candidates.append((area, points))
+
+    if not candidates:
+        raise ValueError("boundary_not_found")
+
+    candidates.sort(key=lambda x: x[0], reverse=True)
+    points = candidates[0][1]
+    ok, encoded = cv2.imencode(".png", image)
+    preview = (
+        "data:image/png;base64," + base64.b64encode(encoded.tobytes()).decode("ascii")
+        if ok else None
+    )
+    return points, width, height, preview
+
+@bp.post("/api/geometry/image")
+@require_user
+def analyze_image_or_pdf():
+    upload = request.files.get("file")
+    if not upload:
+        return jsonify({"error": "file_required"}), 400
+
+    try:
+        image, source_kind = _image_from_upload(upload)
+        points, width, height, preview = _auto_boundary(image)
+    except ValueError as exc:
+        return jsonify({
+            "error": str(exc),
+            "message": "No reliable automatic outer boundary was found. Trace the boundary manually or upload a cleaner plan.",
+        }), 422
+
+    return jsonify({
+        "format": "LAYO-GEO-1.0",
+        "source_type": source_kind,
+        "method": "opencv-largest-outer-contour",
+        "confidence": "auto-trace-draft",
+        "points": points,
+        "image_width": width,
+        "image_height": height,
+        "preview_data_url": preview,
+    })
+
 @bp.post("/api/briefs/<brief_id>/geometry")
 @require_user
 def save_geometry(brief_id):
@@ -130,6 +232,7 @@ def save_geometry(brief_id):
         "user_confirmed": bool(payload.get("user_confirmed")),
         "confirmed_at": payload.get("confirmed_at"),
     }
+
     rows = rest(
         "POST",
         "layo_geometry_models",
