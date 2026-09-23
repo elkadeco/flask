@@ -1,6 +1,6 @@
-# LayoAI live integration v1.9
+# LayoAI live integration v2.0 — Geometry Intelligence
 
-This branch is now connected to the existing LayoAI Supabase project at the application-contract level.
+This branch is connected to the existing LayoAI Supabase project at the application-contract level.
 
 ## Live foundation completed
 - Supabase project restored.
@@ -14,10 +14,26 @@ This branch is now connected to the existing LayoAI Supabase project at the appl
 - Designer access remains allowlist-protected.
 - Health endpoint truthfully reports readiness.
 
+## Site Geometry Intelligence
+The file stage now supports a governed geometry workflow:
+
+1. **UTM coordinates** — redraw a polygon from Easting/Northing points and calculate area mathematically.
+2. **Known dimensions** — calculate and redraw a rectangular site from supplied length × width.
+3. **CAD / DXF-DWG** — DXF closed polylines can be extracted and area-calculated. DWG requires an approved conversion adapter or DXF export.
+4. **Sketch / photo** — the client traces the boundary, calibrates one known edge and confirms the result. Perspective photos remain estimates.
+
+Confirmed geometry is stored as **LAYO-GEO-1.0** with source type, vertices, normalized geometry, area, calculation method, confidence and explicit client confirmation.
+
+The system distinguishes:
+- mathematical precision of the calculation;
+- accuracy/quality of the source geometry;
+- client confirmation;
+- legal/survey verification.
+
 ## Still needs deployment environment configuration
 - Finish secure OpenAI API key setup and set `OPENAI_API_KEY` on the hosting service.
 - Set `OPENAI_MODEL` after model/task evaluation.
 - Add the approved designer email(s) to `DESIGNER_EMAIL_ALLOWLIST`.
-- The current v1.9 wired visual shell is delivered separately as an artifact and should be copied to `layoai/frontend/index.html` in the deployment bundle.
+- Copy the current v2.0 visual shell to `layoai/frontend/index.html` in the deployment bundle.
 
 SMS/WhatsApp verification is not enabled. No fake success state is used.
