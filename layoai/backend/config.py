@@ -22,26 +22,19 @@ DEFAULT_LOCALE = "en"
 
 @dataclass(frozen=True)
 class Settings:
-    app_env: str = os.getenv("APP_ENV", "development")
     secret_key: str = os.getenv("SECRET_KEY", "dev-only-change-me")
-    database_url: str = os.getenv("DATABASE_URL", "sqlite:///layoai.db")
-    agent_database_url: str = os.getenv(
-        "AGENT_DATABASE_URL", "sqlite+aiosqlite:///layoai_agent_sessions.db"
-    )
-    supabase_url: str = os.getenv("SUPABASE_URL", "")
-    supabase_publishable_key: str = os.getenv("SUPABASE_PUBLISHABLE_KEY", "")
+    supabase_url: str = os.getenv("SUPABASE_URL", "https://tcthfufpqfzfuzjoycma.supabase.co")
+    supabase_publishable_key: str = os.getenv("SUPABASE_PUBLISHABLE_KEY", "sb_publishable_WGjEJesxClMtNJPgDwXbyg_tGs6HdGK")
     openai_api_key: str = os.getenv("OPENAI_API_KEY", "")
     openai_model: str = os.getenv("OPENAI_MODEL", "")
+    agent_database_url: str = os.getenv("AGENT_DATABASE_URL", "sqlite+aiosqlite:///layoai_agent_sessions.db")
     designer_email_allowlist: str = os.getenv("DESIGNER_EMAIL_ALLOWLIST", "")
-    storage_provider: str = os.getenv("STORAGE_PROVIDER", "disabled")
+    storage_provider: str = os.getenv("STORAGE_PROVIDER", "supabase")
+    storage_bucket: str = os.getenv("STORAGE_BUCKET", "layoai-private")
     max_upload_mb: int = int(os.getenv("MAX_UPLOAD_MB", "20"))
 
     @property
     def designer_emails(self):
-        return {
-            item.strip().lower()
-            for item in self.designer_email_allowlist.split(",")
-            if item.strip()
-        }
+        return {x.strip().lower() for x in self.designer_email_allowlist.split(",") if x.strip()}
 
 settings = Settings()
