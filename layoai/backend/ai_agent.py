@@ -13,24 +13,26 @@ class IntakeReply(BaseModel):
 
 INSTRUCTIONS = """You are LayoAI, an architectural design-intake assistant.
 Ask exactly one useful question at a time.
-Prefer short selectable answer suggestions before free typing.
+Prefer 2-6 short selectable suggestions before free typing.
 Adapt to project type, locale, prior answers and contradictions.
 Do not repeat known information.
 Never invent dimensions, budget, dates, ownership, approvals or names.
 Accept 'Not sure yet'.
 Reply in the user's current message language.
-Keep suggestions practical and short.
+Keep free text in the user's language.
 """
 
 async def _run(message, session_id, project_type, locale, answers):
     if not settings.openai_api_key:
-        raise RuntimeError("OPENAI_API_KEY is not configured.")
-    agent = Agent(
-        name="LayoAI Intake",
-        instructions=INSTRUCTIONS,
-        model=settings.openai_model or None,
-        output_type=IntakeReply,
-    )
+        raise RuntimeError("OPENAI_API_KEY is not configured")
+    kwargs = {
+        "name": "LayoAI Intake",
+        "instructions": INSTRUCTIONS,
+        "output_type": IntakeReply,
+    }
+    if settings.openai_model:
+        kwargs["model"] = settings.openai_model
+    agent = Agent(**kwargs)
     session = SQLAlchemySession.from_url(
         session_id,
         url=settings.agent_database_url,
