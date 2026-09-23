@@ -11,10 +11,12 @@ from config import settings, SUPPORTED_LOCALES, DEFAULT_LOCALE
 from auth import require_user, require_designer, resolve_identity
 from supabase_rest import rest
 from ai_agent import run_intake_agent_sync
+from geometry import bp as geometry_bp
 
 FRONTEND = (Path(__file__).resolve().parent.parent / "frontend").resolve()
 app = Flask(__name__, static_folder=None)
 app.config["SECRET_KEY"] = settings.secret_key
+app.register_blueprint(geometry_bp)
 
 def brief_expand(token, brief):
     bid = brief["id"]
@@ -28,7 +30,12 @@ def brief_expand(token, brief):
         "brief_id": f"eq.{bid}",
         "order": "created_at.asc",
     }) or []
-    return {**brief, "rooms": rooms, "files": files}
+    geometry = rest("GET", "layo_geometry_models", token, params={
+        "select": "*",
+        "brief_id": f"eq.{bid}",
+        "order": "updated_at.desc",
+    }) or []
+    return {**brief, "rooms": rooms, "files": files, "geometry": geometry}
 
 @app.get("/api/health")
 def health():
@@ -37,6 +44,7 @@ def health():
         "app": "LayoAI",
         "auth_configured": True,
         "database_configured": True,
+        "geometry_configured": True,
         "ai_configured": bool(settings.openai_api_key),
         "storage_configured": settings.storage_provider == "supabase",
     })
