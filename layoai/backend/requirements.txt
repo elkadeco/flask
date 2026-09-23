@@ -1,0 +1,9 @@
+Flask>=3,<4
+gunicorn>=21,<24
+SQLAlchemy>=2,<3
+openai-agents[sqlalchemy]>=0
+aiosqlite>=0.20
+pydantic>=2,<3
+supabase>=2,<3
+python-dotenv>=1,<2
+pytest>=8,<9
